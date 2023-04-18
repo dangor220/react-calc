@@ -36,43 +36,44 @@ function Main(props) {
 }
 
 function Form() {
-
-  const [electro, setElectro] = useState({
-		t1: 0,
-		t2: 0,
-		t3: 0,
-		'холодная вода': 0,
-		'горячая вода': 0,
+  const local = JSON.parse(localStorage.getItem('indication'));
+	const [indication, setIndication] = useState({
+		t1: '',
+		t2: '',
+		t3: '',
+		'горячая вода': '',
+		'холодная вода': '',
+    'горячая вода (пред. м.)': local['горячая вода'] || '',
+    'холодная вода (пред. м.)': local['холодная вода'] || '',
 	});
 
-  const handleChangeInput = (e) => {
-		if (e.value < 0) e.value = '';
-    setElectro(electro => ({...electro, [e.getAttribute('data-option')]: e.value }));
-
-    console.log(electro);
-  }
+	const handleChangeInput = (e) => {
+		setIndication((indication) => ({
+			...indication,
+			[e.getAttribute('data-option')]: e.value,
+		}));
+	};
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		alert(`Submit`);
+		localStorage.setItem('indication', JSON.stringify(indication));
 	};
 	return (
 		<form className="form" onSubmit={handleSubmit}>
-			<Fieldset data="electricity" changeInputData={handleChangeInput}/>
-			<Fieldset data="water" changeInputData={handleChangeInput}/>
+			<Fieldset data="electricity" dataState={indication} changeInputData={handleChangeInput} />
+			<Fieldset data="water" dataState={indication} changeInputData={handleChangeInput} />
 			<button type="submit">Сформировать</button>
 		</form>
 	);
 }
 
 function Fieldset(props) {
-
 	return (
 		<fieldset className="form__wrapper">
 			{props.data === 'water' ? (
-				<Input data={props.data} onHandleChange={props.changeInputData}/>
+				<Input data={props.data} dataState={props.dataState} onHandleChange={props.changeInputData} />
 			) : (
-				<Input data={props.data} onHandleChange={props.changeInputData}/>
+				<Input data={props.data} dataState={props.dataState} onHandleChange={props.changeInputData} />
 			)}
 		</fieldset>
 	);
@@ -80,15 +81,16 @@ function Fieldset(props) {
 
 function Input(props) {
 	const electricity = ['T1', 'T2', 'T3'],
-		water = ['Горячая вода', 'Холодная вода'];
+		water = ['Горячая вода', 'Холодная вода', 'Горячая вода (пред. м.)', 'Холодная вода (пред. м.)'];
 
 	let items;
 
-	
-
 	const handleChange = (event) => {
-    props.onHandleChange(event.target)
+		props.onHandleChange(event.target);
 	};
+  const clearSymbol = (event) => {
+    event.target.value = event.target.value.replace(/[^.\d]/g,'')
+  }
 
 	if (props.data === 'water') {
 		items = water.map((item, index) => {
@@ -97,9 +99,11 @@ function Input(props) {
 					{item}
 					<input
 						className="form__input"
-						type="number"
+						type="text"
+            value={props.dataState[item.toLowerCase()]}
 						data-option={item.toLowerCase()}
 						onChange={handleChange}
+            onKeyUp={clearSymbol}
 					></input>
 				</label>
 			);
@@ -111,10 +115,11 @@ function Input(props) {
 					{item}
 					<input
 						className="form__input"
-						type="number"
+						type="text"
 						min="0"
 						data-option={item.toLowerCase()}
 						onChange={handleChange}
+            onKeyUp={clearSymbol}
 					></input>
 				</label>
 			);
